@@ -1,0 +1,41 @@
+import requests
+import streamlit as st
+
+
+def login_with_sso(username, password):
+    # Define the SSO server URL
+    sso_url = "https://sso.example.com/login"
+
+    # Send a request to the SSO server with the user credentials
+    response = requests.post(sso_url, data={
+        "username": username,
+        "password": password
+    })
+
+    # Check if the response is successful (status code 200)
+    if response.status_code == 200:
+        # If successful, parse the response to get the user information
+        user_info = response.json()
+        # Return the user information
+        return user_info
+    else:
+        # If the response is not successful, raise an error
+        raise Exception("Login failed")
+
+
+def main():
+    st.title("SSO Login")
+
+    username = st.text_input("Username")
+    password = st.text_input("Password", type='password')
+
+    if st.button("Login"):
+        try:
+            user_info = login_with_sso(username, password)
+            st.success("Login successful. User information: %s" % user_info)
+        except Exception as e:
+            st.error("Login failed: %s" % str(e))
+
+
+if __name__ == '__main__':
+    main()
