@@ -79,3 +79,31 @@ def authenticate(code, group):
     if not user_info:
         return False
     return check_group_membership(user_info, group)
+
+def validate_token(access_token, token_validation_endpoint):
+    """
+    Validate the access token using the token validation endpoint.
+    """
+    headers = {
+        "Authorization": "Bearer " + access_token
+    }
+    response = requests.get(token_validation_endpoint, headers=headers)
+    if response.status_code != 200:
+        raise Exception("Failed to validate the token: " + response.text)
+    return response.json()
+
+def authenticate_user(redirect_url, client_id, client_secret, authorization_endpoint, token_endpoint, user_info_endpoint, groups, token_validation_endpoint):
+    """
+    Authenticate the user and check if they are a member of the specified group.
+    """
+    try:
+        authorization_code = get_authorization_code(redirect_url, client_id, authorization_endpoint)
+        access_token = get_access_token(client_id, client_secret, redirect_url, authorization_code, token_endpoint)
+        token_info = validate_token(access_token, token_validation_endpoint)
+        user_info = get_user_info(access_token, user_info_endpoint)
+        if check_group_membership(user_info, groups):
+            print("User is a member of the specified group.")
+        else:
+            print("User is not a member of the specified group.")
+    except Exception as e:
+        print("Authentication failed: " + str(e))
