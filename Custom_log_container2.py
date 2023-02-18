@@ -1,3 +1,13 @@
+#This code defines two functions, create_log_group_if_not_exists()
+#and upload_logs_to_cloudwatch(). The create_log_group_if_not_exists() 
+#function checks if the log group exists,
+#and creates it if it does not. The upload_logs_to_cloudwatch()
+#function uploads the logs to CloudWatch for each Docker container.
+#The main code block checks if the log group
+#exists, creates it if it does not, and then 
+#enters a loop that uploads the logs to CloudWatch every 30 minutes using the time.sleep() function.
+
+
 import os
 import subprocess
 import boto3
