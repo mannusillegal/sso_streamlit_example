@@ -1,0 +1,25 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "IoTDeployment",
+            "Effect": "Allow",
+            "Action": [
+                "iot:CreateDeployment",
+                "iot:DescribeDeployment",
+                "iot:ListDeployments",
+                "iot:UpdateDeployment"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "IoTTagging",
+            "Effect": "Allow",
+            "Action": [
+                "iot:TagResource",
+                "iot:UntagResource"
+            ],
+            "Resource": "arn:aws:iot:<region>:<account-id>:<resource-type>/<resource-name>"
+        }
+    ]
+}
