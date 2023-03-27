@@ -1,0 +1,29 @@
+import csv
+import datetime
+import time
+
+# set the starting timestamp
+timestamp = datetime.datetime(2023, 3, 8, 18, 38, 49)
+
+# open the CSV file
+with open('your_file_name.csv') as csvfile:
+    reader = csv.DictReader(csvfile)
+
+    # loop through each row in the CSV file
+    for row in reader:
+
+        # check if the timestamp in the CSV is after the current timestamp
+        csv_timestamp = datetime.datetime.strptime(row['timestamp'], '%Y-%m-%d %H:%M:%S')
+        while csv_timestamp > timestamp:
+
+            # wait for 15 seconds
+            time.sleep(15)
+
+            # update the timestamp
+            timestamp = timestamp + datetime.timedelta(seconds=15)
+
+        # store the data from selected columns in separate variables
+        timestamp_data = row['timestamp']
+        tags_data = row['tags']
+
+        # do something with the data (e.g. pass it to another module)
