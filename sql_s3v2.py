@@ -1,7 +1,8 @@
-#In this script, the columns_query gets the column names from the database and the columns 
-#variable stores them as a list. The script then writes the column names to the CSV file if it is empty, 
-#and appends the latest data to the existing data otherwise. You can call the copy_to_s3 function with 
-#your table name to copy the latest data to S3
+#In thisscript, we first read the existing data from the S3 file and store it in the existing_data variable. 
+#We then create a StringIO buffer from the existing data and use the csv.reader to skip the header row. 
+#We then use the csv.writer to write the existing data from the buffer to the csv_buffer variable, 
+#followed by the latest data. Finally, we use the s3.Object
+
 
 import io
 import csv
@@ -24,7 +25,7 @@ s3_prefix = '/MySQL/data/'
 s3 = boto3.resource('s3')
 
 # Set up file paths and names
-LOCAL_FILE_NAME = 'mydata.csv'
+LOCAL_FILE_NAME = 'data.csv'
 S3_FILE_NAME = f"{s3_prefix}{{table_name}}/{LOCAL_FILE_NAME}"
 
 def copy_to_s3(table_name):
@@ -52,8 +53,15 @@ def copy_to_s3(table_name):
         # If the file is empty, upload the buffer as a new file
         s3.Object(S3_BUCKET, s3_path).put(Body=csv_buffer.getvalue())
     else:
-        # Otherwise, append the buffer to the existing file
-        s3.Object(S3_BUCKET, s3_path).append(Body=csv_buffer.getvalue())
+        # Otherwise, read the existing file and append the buffer to the contents
+        existing_data = s3.Object(S3_BUCKET, s3_path).get()['Body'].read().decode('utf-8')
+        existing_data_buffer = io.StringIO(existing_data)
+        existing_csvreader = csv.reader(existing_data_buffer)
+        next(existing_csvreader) # skip the header row
+        csvwriter = csv.writer(csv_buffer)
+        for row in existing_csvreader:
+            csvwriter.writerow(row)
+        s3.Object(S3_BUCKET, s3_path).put(Body=csv_buffer.getvalue())
 
-#calling the copy function
+# Example usage:
 copy_to_s3('your_table_name')
