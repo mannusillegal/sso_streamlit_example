@@ -1,0 +1,30 @@
+Enable SSL for Streamlit.
+
+To enable SSL for a Streamlit dashboard, you will need an SSL certificate for your domain.
+You can obtain an SSL certificate from a trusted certificate authority such as L
+et's Encrypt or purchase one from a third-party provider.
+
+Once you have an SSL certificate, you can enable SSL in Streamlit by following these steps:
+Install the pyopenssl package using pip: pip install pyopenssl.
+Generate a self-signed SSL certificate using OpenSSL. You can use the following command to generate a self-signed SSL certificate:
+
+openssl req -x509 -newkey rsa:4096 -nodes -out cert.pem -keyout key.pem -days 365
+This command will generate an SSL certificate (cert.pem) and a private key (key.pem) that are valid for 365 days.
+
+In your Streamlit app, add the following code at the top of your script:
+
+import streamlit as st
+import ssl
+
+if st._is_running_with_streamlit:
+    # SSL certificate configuration
+    ctx = ssl.create_default_context()
+    ctx.load_cert_chain("cert.pem", "key.pem")
+This code creates an SSL context and loads the SSL certificate and private key generated in step 2.
+
+Run your Streamlit app using the --server.enableHttps option:
+streamlit run your_app.py --server.enableHttps --server.sslCertificate cert.pem --server.sslKey key.pem
+
+
+This command starts the Streamlit server with HTTPS enabled and specifies the SSL certificate and private key files to use.
+Note: If you are using a self-signed SSL certificate, your browser may warn you that the connection is not secure. To avoid this warning, you can add the SSL certificate to your browser’s list of trusted certificates.
