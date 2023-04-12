@@ -1,0 +1,48 @@
+---
+RecipeFormatVersion: 2020-01-25
+# Recipe to deploy a cron job that runs a shell script every 10 minutes and logs its activity
+
+# Define the component
+ComponentName: my-cron-job
+ComponentVersion: 1.0.0
+ComponentDescription: Cron job that runs a shell script every 10 minutes and logs its activity
+ComponentPublisher: MyCompany
+
+# Define the component artifacts
+Artifacts:
+  - URI: s3://my-bucket/my-script.sh
+    Unarchive: true
+    DestinationDir: /home/ggc_user/
+    Permissions:
+      - Owner: "ggc_user"
+        Mode: "0755"
+
+# Define the component configuration
+Configuration:
+  ExecutionEnvironment:
+    ResourceAccessPolicies:
+      - Permissions:
+          - SYS_TIME
+          - SYSLOG
+
+# Define the component installation script
+Lifecycle:
+  Install:
+    Script: |
+      #!/bin/bash
+      echo "Installing my-cron-job"
+      chmod +x /home/ggc_user/my-script.sh
+      # Create a log file for the cron job
+      touch /var/log/my-cron-job.log
+      chown ggc_user:ggc_group /var/log/my-cron-job.log
+      # Schedule the cron job to run every 10 minutes and log its activity
+      echo "*/10 * * * * /home/ggc_user/my-script.sh >> /var/log/my-cron-job.log 2>&1" | crontab -u ggc_user -
+
+# Define the component platform requirements
+Platform:
+  OS: linux
+  Architecture: armv7l
+
+# Define the component dependencies
+Dependencies:
+  - "cron"
