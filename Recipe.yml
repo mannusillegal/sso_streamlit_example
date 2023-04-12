@@ -1,0 +1,31 @@
+---
+RecipeFormatVersion: '2021-01-01'
+ComponentName: my-cronjob-component
+ComponentVersion: '1.0.0'
+ComponentDescription: Deploys a cron job to run a shell script every 10 minutes
+ComponentPublisher: Your Company
+Artifacts:
+  - URI: s3://your-bucket-name/your-script.sh
+    Unarchive: true
+Manifests:
+  - Platform:
+      os: linux
+      architecture: armv7l
+      execution:
+        runAs: ggc_user
+        isolationMode: NoContainer
+      capabilities:
+        - SYS_TIME
+        - SYSLOG
+      dependencies:
+        - Name: cron
+          VersionRequirement: 3.0
+        - Name: bash
+          VersionRequirement: 4.0
+      lifecycle:
+        install:
+          script: |
+            #!/bin/bash
+            cp your-script.sh /home/ggc_user/
+            chmod +x /home/ggc_user/your-script.sh
+            echo "*/10 * * * * /home/ggc_user/your-script.sh" | crontab -
