@@ -1,0 +1,51 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Secuity group for dev system
+Parameters:
+  AppName:
+    Description: "Enter a name of the security group."
+    Type: String
+
+  SiteName:
+    Description: "Enter a name of the security group."
+    Type: String
+    Default: "gc"
+
+  VpcId:
+    Description: "Enter a name of the security group."
+    Type: String
+
+  EnvName:
+    Type: String
+    Description: Name of an environment. 'dev', 'staging', 'prod' and any name.
+    AllowedPattern: ^.*[^0-9]$
+    ConstraintDescription: Must end with non-numeric character.
+    Default: "dev"
+    AllowedValues:
+      - dev
+      - test
+      - prod
+
+Resources:
+  CustomGGSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: my new SSH SG
+      GroupName: !Sub miap-edge-${SiteName}-${EnvName}-${AppName}
+      VpcId: !Ref VpcId
+      Tags:
+        [
+          { "Key": "Stage", "Value": "Dev" },
+          { "Key": "Owner", "Value": "suraj" },
+        ]
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          Description: "Allow inboud sql connection"
+          FromPort: 9305
+          ToPort: 9305
+          CidrIp: 10.0.0.0/16
+        - IpProtocol: tcp
+          Description: "custom connection"
+          FromPort: 9304
+          ToPort: 9304
+          CidrIp: 10.0.0.0/16
+# Outputs:
