@@ -67,3 +67,30 @@ def read_from_influxdb(database, measurement):
         return data_dict
     except Exception as e:
         print(f"Error occurred while reading from InfluxDB: {str(e)}")
+        
+        
+  ### Example usage
+
+# Step 1: Prepare the data to be written to InfluxDB
+my_dict = {
+    "key1": {
+        "subkey1": 10,
+        "subkey2": 20
+    },
+    "key2": {
+        "subkey3": 30,
+        "subkey4": 40
+    }
+}
+
+# Step 2: Write the data to InfluxDB
+database = "my_database"
+measurement = "my_measurement"
+write_to_influxdb(my_dict, database, measurement)
+
+# Step 3: Read the data from InfluxDB
+retrieved_data = read_from_influxdb(database, measurement)
+
+# Step 4: Print the retrieved data
+print(retrieved_data)
+      
