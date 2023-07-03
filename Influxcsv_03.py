@@ -1,66 +1,49 @@
+from influxdb_client import InfluxDBClient, Point, WritePrecision
 import csv
-import pandas as pd
-from influxdb_client import InfluxDBClient
 
-INFLUXDB_URL = "http://localhost:8086"
-INFLUXDB_TOKEN = "your_influxdb_token"
-INFLUXDB_ORG = "your_influxdb_org"
-INFLUXDB_BUCKET = "your_influxdb_bucket"
-
-def convert_csv_to_line_protocol(file_path):
-    data = pd.read_csv(file_path)
-
+def convert_csv_to_line_protocol(csv_file):
     lines = []
-    for _, row in data.iterrows():
-        measurement = "your_measurement_name"
-        equipment = row["EQUIPMENT"]
-        timestamp = row["TIMESTAMP"]
-        tagname = row["TAGNAME"]
-        tagvalue = row["TAGVALUE"]
-        tagchangedtimestamp = row["TAGCHANGEDTIMESTAMP"]
-        historical_data_flag = row["HISTORICAL DATA FLAG"]
+    with open(csv_file, 'r') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            line = f"{row['TAGNAME']},EQUIPMENT={row['EQUIPMENT']} "
+            line += f"TAGVALUE={row['TAGVALUE']} "
+            line += f"{int(row['TIMESTAMP']) * 1000000000}"
+            lines.append(line)
+    return lines
 
-        line = f'{measurement},equipment={equipment},tagname={tagname} tagvalue={tagvalue},' \
-               f'tagchangedtimestamp={tagchangedtimestamp},' \
-               f'historical_data_flag={historical_data_flag} {timestamp}'
-
-        lines.append(line)
-
-    return "\n".join(lines)
-
-def load_data_to_influxdb(line_protocol_data):
-    client = InfluxDBClient(url=INFLUXDB_URL, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG)
+def load_data_into_influxdb(lines, token, org, bucket):
+    client = InfluxDBClient(url="http://localhost:8086", token=token)
     write_api = client.write_api()
+    write_api.write(bucket=bucket, record=lines, org=org, write_precision=WritePrecision.NS)
+    write_api.close()
 
-    write_api.write(bucket=INFLUXDB_BUCKET, record=line_protocol_data)
-
-def read_data_from_influxdb():
-    client = InfluxDBClient(url=INFLUXDB_URL, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG)
+def delete_data_from_influxdb(query, token):
+    client = InfluxDBClient(url="http://localhost:8086", token=token)
     query_api = client.query_api()
+    query_api.query(query)
+    query_api.close()
 
-    query = f'from(bucket:"{INFLUXDB_BUCKET}") |> range(start: 0)'
+def handle_error_and_status(func):
+    def wrapper(*args, **kwargs):
+        try:
+            func(*args, **kwargs)
+            print("Data successfully loaded into InfluxDB.")
+        except Exception as e:
+            print(f"An error occurred: {str(e)}")
+    return wrapper
 
-    result = query_api.query(query=query)
-    return result
+@handle_error_and_status
+def main(csv_file, token, org, bucket):
+    lines = convert_csv_to_line_protocol(csv_file)
+    load_data_into_influxdb(lines, token, org, bucket)
+    # Optionally, you can delete the loaded data using the following line:
+    # delete_data_from_influxdb("DELETE FROM <measurement>", token)
 
-def delete_data_from_influxdb():
-    client = InfluxDBClient(url=INFLUXDB_URL, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG)
-    delete_api = client.delete_api()
-
-    predicate = f'_measurement=="your_measurement_name"'
-
-    delete_api.delete(predicate=predicate, bucket=INFLUXDB_BUCKET)
-
-# Example usage:
-csv_file_path = "path/to/your/file.csv"
-line_protocol_data = convert_csv_to_line_protocol(csv_file_path)
-load_data_to_influxdb(line_protocol_data)
-
-# Read data from InfluxDB
-result = read_data_from_influxdb()
-for table in result:
-    for record in table.records:
-        print(record.values)
-
-# Delete data from InfluxDB
-delete_data_from_influxdb()
+if __name__ == '__main__':
+    csv_file = "data.csv"
+    token = "your_influxdb_token"
+    org = "your_organization"
+    bucket = "your_bucket"
+    main(csv_file, token, org, bucket)
+            
